@@ -14,7 +14,7 @@ import BlockvestArtifact from "../../foundry/out/Blockvest.sol/Blockvest.json";
 const CONTRACT_ADDRESS =
   process.env.NEXT_PUBLIC_CHAIN === "sepolia"
     ? "0x58e4123bc0CA156bAFF3D10Bd13becC05694DCD3" // example sepolia
-    : "0x8464135c8F25Da09e49BC8782676a84730C318bC"; // example local
+    : "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // example local
 
 const ABI = BlockvestArtifact.abi as Abi;
 const currentChain: Chain =
@@ -155,16 +155,26 @@ export const blockvestContract = {
       isClosed: data[7],
     };
   },
-
   getAllProjectIds: async () => {
-    const ids = (await publicClient.readContract({
-      address: CONTRACT_ADDRESS as `0x${string}`,
-      abi: ABI,
-      functionName: "getAllProjectIds",
-    })) as bigint[];
-    return ids.map((id) => Number(id));
+    try {
+      const ids = (await publicClient.readContract({
+        address: CONTRACT_ADDRESS as `0x${string}`,
+        abi: ABI,
+        functionName: "getAllProjectIds",
+      })) as bigint[] | undefined;
+  
+      // If ids is undefined or empty, return an empty array
+      if (!ids || ids.length === 0) {
+        return [];
+      }
+  
+      return ids.map((id) => Number(id));
+    } catch (error) {
+      console.error("Error fetching project IDs:", error);
+      return []; // Return empty array on error
+    }
   },
-
+  
   getInvestorAmount: async (projectId: number, investor: `0x${string}`) => {
     const amount = (await publicClient.readContract({
       address: CONTRACT_ADDRESS as `0x${string}`,
